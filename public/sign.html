@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>توقيع التعميم الإلكتروني</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <style>
+    body { font-family: 'Cairo', sans-serif; }
+    canvas { touch-action: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 py-4 px-4 shadow-xs sticky top-0 z-30">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-lg shadow-md shadow-blue-500/20">
+          <i class="fa-solid fa-file-pen"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-slate-900" id="entityName">منصة التعاميم الرسمية</h1>
+          <p class="text-[11px] text-slate-500">منصة الاطلاع والتوقيع الإلكتروني</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-md mx-auto w-full p-4 flex-1 space-y-4">
+
+    <!-- Loading State -->
+    <div id="loadingState" class="bg-white p-8 rounded-2xl shadow-xs text-center border border-slate-200">
+      <i class="fa-solid fa-spinner fa-spin text-blue-600 text-3xl mb-3"></i>
+      <p class="text-sm text-slate-600 font-semibold">جاري تحميل بيانات التعميم...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="hidden bg-white p-8 rounded-2xl shadow-xs text-center border border-red-100">
+      <div class="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto text-2xl mb-3">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-900 mb-1">الرابط غير صحيح</h3>
+      <p id="errorMsg" class="text-xs text-slate-500"></p>
+    </div>
+
+    <!-- Content State -->
+    <div id="contentState" class="hidden space-y-4">
+
+      <!-- Employee Welcome Badge -->
+      <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <p class="text-xs text-blue-600 font-semibold mb-0.5">الموظف المحترم:</p>
+          <h2 class="text-base font-bold text-slate-900" id="employeeName">---</h2>
+          <p class="text-[11px] text-slate-500" id="employeeDept">---</p>
+        </div>
+        <div class="w-10 h-10 bg-white text-blue-600 rounded-xl flex items-center justify-center text-lg shadow-xs">
+          <i class="fa-solid fa-user-check"></i>
+        </div>
+      </div>
+
+      <!-- Circular Details Card -->
+      <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 space-y-3">
+        <div class="flex items-start justify-between">
+          <div>
+            <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-md">تعميم رسمـي</span>
+            <h3 class="text-base font-bold text-slate-900 mt-1" id="circularTitle">---</h3>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed" id="circularDesc"></p>
+
+        <div class="pt-2">
+          <a id="viewPdfBtn" href="#" target="_blank" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
+            <i class="fa-solid fa-file-pdf text-red-400 text-sm"></i> عرض وقراءة التعميم كاملاً (PDF)
+          </a>
+        </div>
+      </div>
+
+      <!-- PDF Viewer Embedded Preview -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs h-72">
+        <iframe id="pdfFrame" class="w-full h-full" src="about:blank"></iframe>
+      </div>
+
+      <!-- SIGNED STATE -->
+      <div id="signedSuccessCard" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center space-y-3">
+        <div class="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-lg shadow-emerald-600/30">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 class="text-lg font-black text-emerald-900">تم الاطلاع والتوقيع بنجاح! ✅</h3>
+        <p class="text-xs text-emerald-700">تم حفظ توقيعك الإلكتروني واعتماده في السجلات الرسمية للتعميم.</p>
+        <div class="pt-2 text-[11px] text-emerald-600 border-t border-emerald-200/60" id="signedTimeStr"></div>
+        <div id="savedSignaturePreview" class="pt-2 flex justify-center"></div>
+      </div>
+
+      <!-- SIGNATURE FORM STATE -->
+      <div id="signFormCard" class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 space-y-4">
+        <h4 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-pen-nib text-blue-600"></i> التوقيع والإقرار الإلكتروني
+        </h4>
+
+        <label class="flex items-start gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 cursor-pointer">
+          <input type="checkbox" id="consentCheckbox" class="w-4 h-4 text-blue-600 rounded mt-0.5">
+          <span class="text-xs text-slate-700 leading-relaxed font-semibold">
+            أقر بأني اطلعت على التعميم أعلاه وقرأت محتواه كاملاً، وأتعهد بالالتزام والعمل بما جاء فيه.
+          </span>
+        </label>
+
+        <!-- Canvas Area -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-slate-600">وقع بإصبعك داخل المربع أدناه:</span>
+            <button type="button" id="clearCanvasBtn" class="text-xs text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-rotate-left"></i> مسح التوقيع
+            </button>
+          </div>
+          <div class="border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50 overflow-hidden relative">
+            <canvas id="signatureCanvas" class="w-full h-44 block"></canvas>
+          </div>
+        </div>
+
+        <button id="submitSignBtn" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/30 text-sm transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check"></i> اعتماد التوقيع وإرسال
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-3 px-4 text-center text-xs text-slate-400">
+    جميع الحقوق محفوظة &copy; <span id="footerYear">2026</span> - منصة التعاميم والتوقيعات
+  </footer>
+
+  <script>
+    const token = window.location.pathname.split('/sign/')[1];
+    let signaturePad = null;
+    let recipientData = null;
+
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (!token) {
+        showError('الرابط غير مكتمل');
+        return;
+      }
+      loadSignInfo();
+    });
+
+    async function loadSignInfo() {
+      try {
+        const res = await fetch(`/api/public/sign-info/${token}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'الرابط غير صحيح');
+          return;
+        }
+
+        recipientData = data;
+        document.getElementById('entityName').textContent = data.entityName;
+        document.getElementById('employeeName').textContent = data.employeeName;
+        document.getElementById('employeeDept').textContent = `${data.department || ''} ${data.jobTitle ? '• ' + data.jobTitle : ''}`;
+        document.getElementById('circularTitle').textContent = data.circularTitle;
+        document.getElementById('circularDesc').textContent = data.circularDescription || 'لا يوجد وصف إضافي للتعميم.';
+        document.getElementById('viewPdfBtn').href = data.circularFilePath;
+        document.getElementById('pdfFrame').src = data.circularFilePath;
+
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('contentState').classList.remove('hidden');
+
+        if (data.status === 'signed') {
+          showSignedSuccess(data.signedAt, data.signatureData);
+        } else {
+          initSignaturePad();
+        }
+      } catch (err) {
+        showError('حدث خطأ أثناء تحميل بيانات التعميم');
+      }
+    }
+
+    function showError(msg) {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('errorMsg').textContent = msg;
+      document.getElementById('errorState').classList.remove('hidden');
+    }
+
+    function showSignedSuccess(signedAt, signatureData) {
+      document.getElementById('signFormCard').classList.add('hidden');
+      document.getElementById('signedSuccessCard').classList.remove('hidden');
+      if (signedAt) {
+        document.getElementById('signedTimeStr').textContent = `تاريخ التوقيع: ${new Date(signedAt).toLocaleString('ar-SA')}`;
+      }
+      if (signatureData) {
+        document.getElementById('savedSignaturePreview').innerHTML = `<img src="${signatureData}" class="h-16 border border-emerald-200 rounded-lg p-1 bg-white">`;
+      }
+    }
+
+    function initSignaturePad() {
+      const canvas = document.getElementById('signatureCanvas');
+
+      // Adjust canvas scaling for retina displays
+      function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        if (signaturePad) signaturePad.clear();
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      signaturePad = new SignaturePad(canvas, {
+        minWidth: 1.5,
+        maxWidth: 3.5,
+        penColor: "#0f172a"
+      });
+
+      document.getElementById('clearCanvasBtn').addEventListener('click', () => {
+        signaturePad.clear();
+      });
+
+      document.getElementById('submitSignBtn').addEventListener('click', submitSignature);
+    }
+
+    async function submitSignature() {
+      const checkbox = document.getElementById('consentCheckbox');
+      if (!checkbox.checked) {
+        alert('يرجى الموافقة على الإقرار بالاطلاع على التعميم أولاً');
+        return;
+      }
+
+      if (signaturePad.isEmpty()) {
+        alert('يرجى التوقيع داخل المربع باللمس أولاً');
+        return;
+      }
+
+      const signatureData = signaturePad.toDataURL('image/png');
+      const btn = document.getElementById('submitSignBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ التوقيع...';
+
+      try {
+        const res = await fetch(`/api/public/sign/${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ signatureData })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showSignedSuccess(new Date(), signatureData);
+        } else {
+          alert(data.error || 'حدث خطأ أثناء حفظ التوقيع');
+        }
+      } catch (err) {
+        alert('حدث خطأ في الاتصال بالسيرفر');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> اعتماد التوقيع وإرسال';
+      }
+    }
+  </script>
+</body>
+</html>

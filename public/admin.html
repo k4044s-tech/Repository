@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم - منصة اطلاع التعاميم والتوقيعات</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Cairo', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- ================= LOGIN VIEW ================= -->
+  <div id="loginView" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-slate-100">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl shadow-lg shadow-blue-500/30 mb-4">
+          <i class="fa-solid fa-file-shield"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900">منصة التعاميم والتوقيعات</h1>
+        <p class="text-sm text-slate-500 mt-1">تسجيل دخول مسؤولة الجهة</p>
+      </div>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">اسم المستخدم</label>
+          <input type="text" id="loginUser" required value="admin" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">كلمة المرور</label>
+          <input type="password" id="loginPass" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div id="loginError" class="text-red-500 text-sm text-center hidden"></div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-600/30 transition">
+          دخول لوحة التحكم
+        </button>
+      </form>
+      <div class="mt-6 text-center text-xs text-slate-400">
+        البيانات الافتراضية: admin / admin123
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP VIEW ================= -->
+  <div id="appView" class="hidden flex-1 flex flex-col">
+    <!-- Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <div class="flex items-center space-x-4 space-x-reverse">
+          <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shadow-md shadow-blue-500/20">
+            <i class="fa-solid fa-file-contract"></i>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-slate-900" id="headerEntityName">منصة التعاميم الرسمية</h1>
+            <p class="text-xs text-slate-500">نظام إدارة التعاميم ومتابعة التوقيعات الإلكترونية</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 space-x-reverse">
+          <button onclick="logout()" class="text-slate-600 hover:text-red-600 px-4 py-2 rounded-xl text-sm font-semibold transition hover:bg-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6 space-x-reverse">
+        <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="py-4 px-3 border-b-2 font-bold text-sm transition border-blue-600 text-blue-600 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie"></i> لوحة الإحصائيات
+        </button>
+        <button onclick="switchTab('circulars')" id="tabBtn-circulars" class="py-4 px-3 border-b-2 font-semibold text-sm transition border-transparent text-slate-600 hover:text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-bullhorn"></i> التعاميم والقرارات
+        </button>
+        <button onclick="switchTab('employees')" id="tabBtn-employees" class="py-4 px-3 border-b-2 font-semibold text-sm transition border-transparent text-slate-600 hover:text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-users"></i> إدارة الموظفين
+        </button>
+        <button onclick="switchTab('settings')" id="tabBtn-settings" class="py-4 px-3 border-b-2 font-semibold text-sm transition border-transparent text-slate-600 hover:text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-gear"></i> إعدادات الجهة
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+      <!-- TAB: DASHBOARD -->
+      <section id="tab-dashboard" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-500 font-semibold mb-1">إجمالي التعاميم المرفوعة</p>
+              <h3 class="text-3xl font-black text-slate-900" id="statCirculars">0</h3>
+            </div>
+            <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-500 font-semibold mb-1">إجمالي الموظفين</p>
+              <h3 class="text-3xl font-black text-slate-900" id="statEmployees">0</h3>
+            </div>
+            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl">
+              <i class="fa-solid fa-user-group"></i>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-500 font-semibold mb-1">التوقيعات المكتملة</p>
+              <h3 class="text-3xl font-black text-emerald-600" id="statSigned">0</h3>
+            </div>
+            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-500 font-semibold mb-1">بانتظار التوقيع</p>
+              <h3 class="text-3xl font-black text-amber-500" id="statPending">0</h3>
+            </div>
+            <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl">
+              <i class="fa-solid fa-clock"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 class="text-2xl font-black mb-2">ابدأ برفع تعميم جديد الآن 📄</h2>
+            <p class="text-blue-100 text-sm max-w-xl">ارفع ملف التعميم بصيغة PDF، وحدد الموظفات المستهدفات، وأرسل لكل موظفة رابطها الخاص لتوقع بإصبعها من الجوال بكل سهولة دون تسجيل دخول!</p>
+          </div>
+          <button onclick="openUploadModal()" class="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 shrink-0">
+            <i class="fa-solid fa-plus"></i> رفع تعميم جديد
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB: CIRCULARS -->
+      <section id="tab-circulars" class="hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">التعاميم والقرارات</h2>
+            <p class="text-xs text-slate-500">إدارة التعاميم المرفوعة ومتابعة كشوف التوقيعات</p>
+          </div>
+          <button onclick="openUploadModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-sm">
+            <i class="fa-solid fa-plus"></i> رفع تعميم جديد
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase">
+                  <th class="p-4">عنوان التعميم</th>
+                  <th class="p-4">تاريخ الرفع</th>
+                  <th class="p-4">المستلمون</th>
+                  <th class="p-4">تم التوقيع</th>
+                  <th class="p-4">بانتظار التوقيع</th>
+                  <th class="p-4 text-center">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="circularsTableBody" class="divide-y divide-slate-100 text-sm">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: EMPLOYEES -->
+      <section id="tab-employees" class="hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">إدارة الموظفين</h2>
+            <p class="text-xs text-slate-500">قائمة الموظفين المستهدفين بالتعاميم والتوقيعات</p>
+          </div>
+          <button onclick="openEmployeeModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-sm">
+            <i class="fa-solid fa-user-plus"></i> إضافة موظف جديد
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase">
+                  <th class="p-4">اسم الموظف</th>
+                  <th class="p-4">المسمى الوظيفي</th>
+                  <th class="p-4">القسم / الإدارة</th>
+                  <th class="p-4">رقم الجوال</th>
+                  <th class="p-4 text-center">حذف</th>
+                </tr>
+              </thead>
+              <tbody id="employeesTableBody" class="divide-y divide-slate-100 text-sm">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: SETTINGS -->
+      <section id="tab-settings" class="hidden space-y-6 max-w-xl">
+        <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
+          <h2 class="text-xl font-bold text-slate-900 mb-4">إعدادات الجهة</h2>
+          <form id="settingsForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">اسم الجهة / المؤسسة / المدرسة</label>
+              <input type="text" id="settingEntityName" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1">كلمة مرور جديدة (اتركها فارغة إن لم ترد التغيير)</label>
+              <input type="password" id="settingNewPassword" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+            <div id="settingsMsg" class="text-sm font-semibold hidden"></div>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl shadow-md transition">
+              حفظ التغييرات
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= MODAL: UPLOAD CIRCULAR ================= -->
+  <div id="uploadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-900">رفع تعميم جديد بصيغة PDF</h3>
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="uploadForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">عنوان التعميم</label>
+          <input type="text" id="circularTitle" required placeholder="مثال: تعميم بشأن تنظيم الدوام الرسمي" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">وصف أو تفاصيل التعميم (اختياري)</label>
+          <textarea id="circularDesc" rows="3" placeholder="ملخص سريع لمضمون التعميم..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">ملف التعميم (PDF)</label>
+          <input type="file" id="circularFile" accept=".pdf" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">تحديد الموظفين المستهدفين</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+              <input type="radio" name="empTargetType" value="all" checked onchange="toggleEmpSelection(false)" class="w-4 h-4 text-blue-600">
+              إرسال لجميع الموظفين المسجلين (<span id="totalEmpCountBadge">0</span> موظف)
+            </label>
+            <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+              <input type="radio" name="empTargetType" value="custom" onchange="toggleEmpSelection(true)" class="w-4 h-4 text-blue-600">
+              اختر موظفين محددين
+            </label>
+          </div>
+          <div id="customEmpContainer" class="hidden mt-2 border border-slate-200 rounded-xl p-3 max-h-40 overflow-y-auto space-y-2 bg-slate-50">
+            <!-- Checkbox list of employees -->
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeUploadModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-100">إلغاء</button>
+          <button type="submit" id="uploadSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm shadow-md transition">رفع وإرسال الروابط</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ADD EMPLOYEE ================= -->
+  <div id="employeeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100">
+      <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-900">إضافة موظفة جديدة</h3>
+        <button onclick="closeEmployeeModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="employeeForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">اسم الموظف الثلاثي</label>
+          <input type="text" id="empName" required placeholder="مثال: محمد أحمد محمد" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">المسمى الوظيفي</label>
+          <input type="text" id="empJobTitle" placeholder="مثال: معلم / إداري" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">القسم أو الإدارة</label>
+          <input type="text" id="empDepartment" placeholder="مثال: شؤون المعلمين" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">رقم الجوال</label>
+          <input type="text" id="empMobile" placeholder="05xxxxxxxx" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onclick="closeEmployeeModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-100">إلغاء</button>
+          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm shadow-md transition">حفظ الموظف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CIRCULAR DETAILS & RECIPIENTS ================= -->
+  <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 border border-slate-100 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900" id="modalCircularTitle">تفاصيل التعميم</h3>
+          <p class="text-xs text-slate-500" id="modalCircularDate"></p>
+        </div>
+        <div class="flex items-center gap-3">
+          <a id="modalDownloadPdfBtn" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-download"></i> تحميل التقرير الشامل (PDF)
+          </a>
+          <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto py-4 space-y-4">
+        <div class="flex items-center justify-between">
+          <h4 class="font-bold text-slate-800 text-sm">متابعة توقيعات الموظفين المستلمين</h4>
+        </div>
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <table class="w-full text-right border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase">
+                <th class="p-3">الموظف</th>
+                <th class="p-3">المسمى والقسم</th>
+                <th class="p-3">الحالة</th>
+                <th class="p-3">تاريخ ووقت التوقيع</th>
+                <th class="p-3 text-center">رابط الموظف الخاص</th>
+              </tr>
+            </thead>
+            <tbody id="recipientsTableBody" class="divide-y divide-slate-100 text-sm">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allEmployees = [];
+    let currentCirculars = [];
+
+    // Check login state
+    window.addEventListener('DOMContentLoaded', () => {
+      const isLogged = localStorage.getItem('isLoggedIn');
+      if (isLogged === 'true') {
+        showApp();
+      }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('loginUser').value;
+      const password = document.getElementById('loginPass').value;
+      const errBox = document.getElementById('loginError');
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('entityName', data.entityName);
+          showApp();
+        } else {
+          errBox.textContent = data.error || 'خطأ في بيانات الدخول';
+          errBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        errBox.textContent = 'حدث خطأ في الاتصال بالخادم';
+        errBox.classList.remove('hidden');
+      }
+    });
+
+    function logout() {
+      localStorage.removeItem('isLoggedIn');
+      location.reload();
+    }
+
+    function showApp() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('appView').classList.remove('hidden');
+      const entity = localStorage.getItem('entityName') || 'منصة التعاميم الرسمية';
+      document.getElementById('headerEntityName').textContent = entity;
+      document.getElementById('settingEntityName').value = entity;
+      loadDashboardData();
+    }
+
+    // Tabs navigation
+    function switchTab(tab) {
+      ['dashboard', 'circulars', 'employees', 'settings'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`tabBtn-${t}`).className = 'py-4 px-3 border-b-2 font-semibold text-sm transition border-transparent text-slate-600 hover:text-slate-900 flex items-center gap-2';
+      });
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      document.getElementById(`tabBtn-${tab}`).className = 'py-4 px-3 border-b-2 font-bold text-sm transition border-blue-600 text-blue-600 flex items-center gap-2';
+
+      if (tab === 'dashboard') loadDashboardData();
+      if (tab === 'circulars') loadCirculars();
+      if (tab === 'employees') loadEmployees();
+    }
+
+    // Load Dashboard Stats
+    async function loadDashboardData() {
+      try {
+        const res = await fetch('/api/admin/dashboard-stats');
+        const stats = await res.json();
+        document.getElementById('statCirculars').textContent = stats.totalCirculars;
+        document.getElementById('statEmployees').textContent = stats.totalEmployees;
+        document.getElementById('statSigned').textContent = stats.totalSigned;
+        document.getElementById('statPending').textContent = stats.totalPending;
+
+        // Load employees count for upload modal
+        const empRes = await fetch('/api/employees');
+        allEmployees = await empRes.json();
+        document.getElementById('totalEmpCountBadge').textContent = allEmployees.length;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Load Circulars
+    async function loadCirculars() {
+      try {
+        const res = await fetch('/api/circulars');
+        currentCirculars = await res.json();
+        const tbody = document.getElementById('circularsTableBody');
+        tbody.innerHTML = '';
+
+        if (currentCirculars.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد تعاميم مرفوعة حتى الآن</td></tr>`;
+          return;
+        }
+
+        currentCirculars.forEach(c => {
+          const signed = c.signed_count || 0;
+          const pending = c.pending_count || 0;
+          const total = c.total_recipients || 0;
+          const dateStr = new Date(c.created_at).toLocaleDateString('ar-SA');
+
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+              <td class="p-4 font-bold text-slate-900">
+                <a href="${c.file_path}" target="_blank" class="hover:text-blue-600 flex items-center gap-2">
+                  <i class="fa-solid fa-file-pdf text-red-500"></i> ${c.title}
+                </a>
+              </td>
+              <td class="p-4 text-slate-500 text-xs">${dateStr}</td>
+              <td class="p-4"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">${total} موظفة</span></td>
+              <td class="p-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-bold">${signed} موظفات</span></td>
+              <td class="p-4"><span class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-xs font-bold">${pending} موظفات</span></td>
+              <td class="p-4 text-center space-x-2 space-x-reverse">
+                <button onclick="openDetailsModal(${c.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">
+                  <i class="fa-solid fa-list-check"></i> المتابعة والكشوف
+                </button>
+                <button onclick="deleteCircular(${c.id})" class="text-slate-400 hover:text-red-600 px-2 py-1 text-xs">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Load Employees
+    async function loadEmployees() {
+      try {
+        const res = await fetch('/api/employees');
+        allEmployees = await res.json();
+        const tbody = document.getElementById('employeesTableBody');
+        tbody.innerHTML = '';
+
+        if (allEmployees.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">لا يوجد موظفون مسجلون حتى الآن</td></tr>`;
+          return;
+        }
+
+        allEmployees.forEach(e => {
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+              <td class="p-4 font-bold text-slate-900">${e.name}</td>
+              <td class="p-4 text-slate-600">${e.job_title || '---'}</td>
+              <td class="p-4 text-slate-600">${e.department || '---'}</td>
+              <td class="p-4 text-slate-600">${e.mobile || '---'}</td>
+              <td class="p-4 text-center">
+                <button onclick="deleteEmployee(${e.id})" class="text-slate-400 hover:text-red-600 p-2 rounded-lg transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Upload Modal Management
+    async function openUploadModal() {
+      const res = await fetch('/api/employees');
+      allEmployees = await res.json();
+      document.getElementById('totalEmpCountBadge').textContent = allEmployees.length;
+
+      const container = document.getElementById('customEmpContainer');
+      container.innerHTML = '';
+      allEmployees.forEach(e => {
+        container.innerHTML += `
+          <label class="flex items-center gap-2 text-xs text-slate-700">
+            <input type="checkbox" name="selectedEmp" value="${e.id}" class="w-4 h-4 text-blue-600 rounded">
+            <span class="font-bold">${e.name}</span> <span class="text-slate-400">(${e.department || 'عام'})</span>
+          </label>
+        `;
+      });
+
+      document.getElementById('uploadModal').classList.remove('hidden');
+    }
+    function closeUploadModal() {
+      document.getElementById('uploadModal').classList.add('hidden');
+      document.getElementById('uploadForm').reset();
+    }
+    function toggleEmpSelection(show) {
+      const box = document.getElementById('customEmpContainer');
+      if (show) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    }
+
+    // Handle Upload Form Submit
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('circularTitle').value;
+      const description = document.getElementById('circularDesc').value;
+      const fileInput = document.getElementById('circularFile');
+      const targetType = document.querySelector('input[name="empTargetType"]:checked').value;
+
+      let empIds = 'all';
+      if (targetType === 'custom') {
+        const checked = document.querySelectorAll('input[name="selectedEmp"]:checked');
+        empIds = Array.from(checked).map(cb => parseInt(cb.value));
+        if (empIds.length === 0) {
+          alert('يرجى اختيار موظف واحد على الأقل');
+          return;
+        }
+      }
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('file', fileInput.files[0]);
+      formData.append('employee_ids', JSON.stringify(empIds));
+
+      const btn = document.getElementById('uploadSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الرفع وإنشاء الروابط...';
+
+      try {
+        const res = await fetch('/api/circulars', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeUploadModal();
+          switchTab('circulars');
+        } else {
+          alert(data.error || 'حدث خطأ أثناء رفع التعميم');
+        }
+      } catch (err) {
+        alert('حدث خطأ في الاتصال بالخادم');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'رفع وإرسال الروابط';
+      }
+    });
+
+    // Employee Modal Management
+    function openEmployeeModal() {
+      document.getElementById('employeeModal').classList.remove('hidden');
+    }
+    function closeEmployeeModal() {
+      document.getElementById('employeeModal').classList.add('hidden');
+      document.getElementById('employeeForm').reset();
+    }
+
+    document.getElementById('employeeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('empName').value;
+      const job_title = document.getElementById('empJobTitle').value;
+      const department = document.getElementById('empDepartment').value;
+      const mobile = document.getElementById('empMobile').value;
+
+      try {
+        const res = await fetch('/api/employees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, job_title, department, mobile })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeEmployeeModal();
+          loadEmployees();
+        } else {
+          alert(data.error || 'خطأ في إضافة الموظف');
+        }
+      } catch (err) {
+        alert('خطأ في الاتصال بالخادم');
+      }
+    });
+
+    async function deleteEmployee(id) {
+      if (!confirm('هل أنت متأكد من حذف هذا الموظف؟')) return;
+      await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+      loadEmployees();
+    }
+
+    async function deleteCircular(id) {
+      if (!confirm('هل أنت متأكد من حذف هذا التعميم؟')) return;
+      await fetch(`/api/circulars/${id}`, { method: 'DELETE' });
+      loadCirculars();
+    }
+
+    // Details Modal
+    async function openDetailsModal(id) {
+      try {
+        const res = await fetch(`/api/circulars/${id}`);
+        const data = await res.json();
+        if (!res.ok) return;
+
+        document.getElementById('modalCircularTitle').textContent = data.circular.title;
+        document.getElementById('modalCircularDate').textContent = `تاريخ الرفع: ${new Date(data.circular.created_at).toLocaleString('ar-SA')}`;
+        document.getElementById('modalDownloadPdfBtn').href = `/api/circulars/${id}/export-pdf`;
+
+        const tbody = document.getElementById('recipientsTableBody');
+        tbody.innerHTML = '';
+
+        data.recipients.forEach(r => {
+          const signLink = `${window.location.origin}/sign/${r.token}`;
+          let statusBadge = '<span class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-xs font-bold">بانتظار القراءة</span>';
+          if (r.status === 'viewed') statusBadge = '<span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">تم الاطلاع</span>';
+          if (r.status === 'signed') statusBadge = '<span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-bold">تم التوقيع ✅</span>';
+
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+              <td class="p-3 font-bold text-slate-900">${r.employee_name}</td>
+              <td class="p-3 text-slate-600 text-xs">${r.department || '---'} | ${r.job_title || '---'}</td>
+              <td class="p-3">${statusBadge}</td>
+              <td class="p-3 text-slate-500 text-xs">${r.signed_at || '---'}</td>
+              <td class="p-3 text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <input type="text" readonly value="${signLink}" class="bg-slate-100 px-2 py-1 rounded text-xs text-slate-600 w-48 select-all">
+                  <button onclick="navigator.clipboard.writeText('${signLink}'); alert('تم نسخ الرابط بنجاح!');" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded text-xs font-semibold shadow-xs">
+                    <i class="fa-solid fa-copy"></i> نسخ
+                  </button>
+                  <a href="${signLink}" target="_blank" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1 rounded text-xs font-semibold">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        document.getElementById('detailsModal').classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function closeDetailsModal() {
+      document.getElementById('detailsModal').classList.add('hidden');
+    }
+
+    // Settings
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const entity_name = document.getElementById('settingEntityName').value;
+      const new_password = document.getElementById('settingNewPassword').value;
+      const msgBox = document.getElementById('settingsMsg');
+
+      try {
+        const res = await fetch('/api/admin/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entity_name, new_password })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          localStorage.setItem('entityName', entity_name);
+          document.getElementById('headerEntityName').textContent = entity_name;
+          msgBox.textContent = 'تم حفظ الإعدادات بنجاح';
+          msgBox.className = 'text-sm font-semibold text-emerald-600';
+          msgBox.classList.remove('hidden');
+        } else {
+          msgBox.textContent = data.error || 'خطأ في الحفظ';
+          msgBox.className = 'text-sm font-semibold text-red-500';
+          msgBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        msgBox.textContent = 'خطأ في الاتصال بالخادم';
+        msgBox.className = 'text-sm font-semibold text-red-500';
+        msgBox.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
